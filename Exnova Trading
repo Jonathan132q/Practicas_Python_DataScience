@@ -1,0 +1,36 @@
+import yfinance as yf
+import pandas as pd
+import numpy as np
+import talib
+import time
+
+# Definir el símbolo del activo
+symbol = 'AAPL'  # Cambia esto por el ticker de la acción que desees analizar
+
+# Descargar datos históricos a intervalos de 5 segundos
+# Aquí, como ejemplo, se descarga en intervalos de 1 minuto (en Yahoo Finance no hay datos exactos de 5 segundos)
+# Pero, en un entorno de trading real con un broker, podrías obtener datos a 5 segundos.
+data = yf.download(symbol, period="1d", interval="1m")
+
+# Calcular las medias móviles
+short_window = 5  # Media móvil rápida (5 minutos)
+long_window = 20  # Media móvil lenta (20 minutos)
+
+# Calcular las medias móviles simples (SMA)
+data['SMA_short'] = data['Close'].rolling(window=short_window).mean()
+data['SMA_long'] = data['Close'].rolling(window=long_window).mean()
+
+# Crear las señales de compra y venta
+data['Signal'] = 0
+data['Signal'][short_window:] = np.where(data['SMA_short'][short_window:] > data['SMA_long'][short_window:], 1, 0)
+data['Position'] = data['Signal'].diff()
+
+# Mostrar los resultados
+print(data.tail())
+
+# Simular las señales (podrías implementar ejecución real de órdenes aquí)
+for index, row in data.iterrows():
+    if row['Position'] == 1:
+        print(f"Señal de compra en {index} - Precio: {row['Close']}")
+    elif row['Position'] == -1:
+        print(f"Señal de venta en {index} - Precio: {row['Close']}")
